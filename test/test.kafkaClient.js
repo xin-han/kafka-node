@@ -562,13 +562,13 @@ describe('Kafka Client', function () {
 
     it('should not wrap if there is not a this.options.requestTimeout', function () {
       const myFn = function () {};
-      const retFn = wrapTimeoutIfNeeded(1, 1, myFn);
+      const retFn = wrapTimeoutIfNeeded({ socketId: 1 }, 1, myFn);
       myFn.should.be.exactly(retFn);
     });
 
     it('should not yield timeout if returned callback is called in time', function (done) {
       client.options.requestTimeout = 400;
-      const retFn = wrapTimeoutIfNeeded(1, 1, done);
+      const retFn = wrapTimeoutIfNeeded({ socketId: 1 }, 1, done);
       retFn.should.not.be.exactly(done);
       clock.tick(300);
       retFn();
@@ -579,11 +579,11 @@ describe('Kafka Client', function () {
       client.options.requestTimeout = 400;
       function callback (error) {
         error.should.be.an.instanceOf(TimeoutError);
-        error.message.should.be.exactly('Request timed out after 400ms');
+        error.message.should.match(/Request timed out after 400ms/);
         sinon.assert.calledWithExactly(client.unqueueCallback, 1, 10);
         done();
       }
-      const retFn = wrapTimeoutIfNeeded(1, 10, callback);
+      const retFn = wrapTimeoutIfNeeded({ socketId: 1 }, 10, callback);
       retFn.should.not.be.exactly(callback);
       clock.tick(400);
       retFn(new Error('BAD'));
